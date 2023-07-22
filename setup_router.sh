@@ -9,7 +9,7 @@ install_packages() {
 # Function to configure WAN interface
 configure_wan_interface() {
   read -p "Enter your WAN interface name (e.g., eth0): " wan_interface
-  cat <<EOF | sudo tee /etc/network/interfaces
+  cat <<EOF | sudo tee -a /etc/network/interfaces
 auto $wan_interface
 iface $wan_interface inet dhcp
 EOF
@@ -35,7 +35,7 @@ EOF
 
 # Function to configure DHCP server
 configure_dhcp_server() {
-  cat <<EOF | sudo tee /etc/dhcp/dhcpd.conf
+  cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
 subnet $lan_ip netmask 255.255.255.0 {
   range $lan_ip.100 $lan_ip.200;
   option routers $lan_ip;
