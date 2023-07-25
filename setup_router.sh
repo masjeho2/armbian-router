@@ -9,7 +9,11 @@ install_packages() {
 # Function to configure WAN interface
 configure_wan_interface() {
   read -p "Enter your WAN interface name (e.g., eth0): " wan_interface
-  cat <<EOF | sudo tee -a /etc/network/interfaces
+  cat <<EOF | sudo tee /etc/network/interfaces
+source /etc/network/interfaces.d/*
+# Network is managed by Network manager
+auto lo
+iface lo inet loopback
 auto $wan_interface
 iface $wan_interface inet dhcp
 EOF
@@ -24,26 +28,28 @@ enable_ip_forwarding() {
 # Function to configure LAN interface
 configure_lan_interface() {
   read -p "Enter your LAN interface name (e.g., eth1): " lan_interface
-  read -p "Enter the desired LAN IP address (e.g., 192.168.1.1): " lan_ip
-  cat <<EOF | sudo tee /etc/network/interfaces
-source /etc/network/interfaces.d/*
-# Network is managed by Network manager
-auto lo
-iface lo inet loopback
+  read -p "Enter the desired LAN IP address (e.g., 192.168.10.1): " lan_ip
+  read -p "Enter the LAN subnet (e.g., 192.168.10.0/24): " lan_subnet
+  cat <<EOF | sudo tee -a /etc/network/interfaces
 auto $lan_interface
 iface $lan_interface inet static
   address $lan_ip
-  netmask 255.255.255.0
+  netmask $lan_subnet
 EOF
 }
 
 # Function to configure DHCP server
 configure_dhcp_server() {
-  cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
-subnet $lan_ip.0 netmask 255.255.255.0 {
-  range $lan_ip.100 $lan_ip.200;
+  read -p "Enter the DHCP range start address (e.g., 192.168.10.100): " dhcp_range_start
+  read -p "Enter the DHCP range end address (e.g., 192.168.10.200): " dhcp_range_end
+  read -p "Enter the primary DNS server address (e.g., 8.8.8.8): " dns_primary
+  read -p "Enter the secondary DNS server address (e.g., 8.8.4.4): " dns_secondary
+
+  cat <<EOF | sudo tee /etc/dhcp/dhcpd.conf
+subnet $lan_subnet {
+  range $dhcp_range_start $dhcp_range_end;
   option routers $lan_ip;
-  option domain-name-servers 8.8.8.8, 8.8.4.4;
+  option domain-name-servers $dns_primary, $dns_secondary;
 }
 EOF
 
