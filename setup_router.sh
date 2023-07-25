@@ -34,7 +34,7 @@ configure_lan_interface() {
 auto $lan_interface
 iface $lan_interface inet static
   address $lan_ip
-  netmask $lan_subnet
+ # netmask $lan_subnet
 EOF
 }
 
@@ -45,7 +45,7 @@ configure_dhcp_server() {
   read -p "Enter the primary DNS server address (e.g., 8.8.8.8): " dns_primary
   read -p "Enter the secondary DNS server address (e.g., 8.8.4.4): " dns_secondary
 
-  cat <<EOF | sudo tee /etc/dhcp/dhcpd.conf
+  cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
 subnet $lan_subnet {
   range $dhcp_range_start $dhcp_range_end;
   option routers $lan_ip;
