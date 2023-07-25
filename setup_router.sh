@@ -29,12 +29,13 @@ enable_ip_forwarding() {
 configure_lan_interface() {
   read -p "Enter your LAN interface name (e.g., eth1): " lan_interface
   read -p "Enter the desired LAN IP address (e.g., 192.168.10.1): " lan_ip
-  read -p "Enter the LAN subnet (e.g., 192.168.10.0/24): " lan_subnet
+  read -p "Enter the LAN subnet (e.g., 192.168.10.0): " lan_subnet
+  read -p "Enter the LAN netmask (e.g., 255.255.255.0): " lan_netmask
   cat <<EOF | sudo tee -a /etc/network/interfaces
 auto $lan_interface
 iface $lan_interface inet static
   address $lan_ip
- # netmask $lan_subnet
+  netmask $lan_netmask
 EOF
 }
 
@@ -46,7 +47,7 @@ configure_dhcp_server() {
   read -p "Enter the secondary DNS server address (e.g., 8.8.4.4): " dns_secondary
 
   cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
-subnet $lan_subnet {
+subnet $lan_subnet netmask $lan_netmask {
   range $dhcp_range_start $dhcp_range_end;
   option routers $lan_ip;
   option domain-name-servers $dns_primary, $dns_secondary;
