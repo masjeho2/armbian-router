@@ -25,7 +25,11 @@ enable_ip_forwarding() {
 configure_lan_interface() {
   read -p "Enter your LAN interface name (e.g., eth1): " lan_interface
   read -p "Enter the desired LAN IP address (e.g., 192.168.1.1): " lan_ip
-  cat <<EOF | sudo tee -a /etc/network/interfaces
+  cat <<EOF | sudo tee /etc/network/interfaces
+source /etc/network/interfaces.d/*
+# Network is managed by Network manager
+auto lo
+iface lo inet loopback
 auto $lan_interface
 iface $lan_interface inet static
   address $lan_ip
@@ -36,7 +40,7 @@ EOF
 # Function to configure DHCP server
 configure_dhcp_server() {
   cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
-subnet $lan_ip netmask 255.255.255.0 {
+subnet $lan_ip.0 netmask 255.255.255.0 {
   range $lan_ip.100 $lan_ip.200;
   option routers $lan_ip;
   option domain-name-servers 8.8.8.8, 8.8.4.4;
