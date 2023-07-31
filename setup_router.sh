@@ -56,7 +56,7 @@ configure_dhcp_server() {
   read -p "Enter the secondary DNS server address (e.g., 8.8.4.4): " dns_secondary
   dns_secondary=${dns_secondary:-8.8.4.4}
 
-  cat <<EOF | sudo tee /etc/dhcp/dhcpd.conf
+  cat <<EOF | sudo tee -a /etc/dhcp/dhcpd.conf
 subnet $lan_subnet netmask $lan_netmask {
   range $dhcp_range_start $dhcp_range_end;
   option routers $lan_ip;
