@@ -22,8 +22,8 @@ EOF
 
 # Function to enable IP forwarding
 enable_ip_forwarding() {
-  sudo sed -i '/^#net.ipv4.ip_forward=1/s/^#//' /etc/sysctl.conf
-  sudo sysctl -p
+  sudo sysctl -w net.ipv4.ip_forward=1
+  sudo sed -i '/^net.ipv4.ip_forward=1/s/^#//; /^net.ipv4.ip_forward=/s/0/1/' /etc/sysctl.conf
 }
 
 # Function to configure LAN interface
@@ -34,8 +34,6 @@ configure_lan_interface() {
   lan_ip=${lan_ip:-192.168.10.1}
   read -p "Enter the LAN netmask (e.g., 255.255.255.0): " lan_netmask
   lan_netmask=${lan_netmask:-255.255.255.0}
-  read -p "Enter the LAN subnet (e.g., 192.168.10.0): " lan_subnet
-  lan_subnet=${lan_subnet:-192.168.10.0}
 
   cat <<EOF | sudo tee -a /etc/network/interfaces
 auto $lan_interface
@@ -47,6 +45,8 @@ EOF
 
 # Function to configure DHCP server
 configure_dhcp_server() {
+  read -p "Enter the LAN subnet (e.g., 192.168.10.0): " lan_subnet
+  lan_subnet=${lan_subnet:-192.168.10.0}
   read -p "Enter the DHCP range start address (e.g., 192.168.10.100): " dhcp_range_start
   dhcp_range_start=${dhcp_range_start:-192.168.10.100}
   read -p "Enter the DHCP range end address (e.g., 192.168.10.200): " dhcp_range_end
@@ -68,15 +68,10 @@ EOF
   sudo service isc-dhcp-server start
 }
 
-# Function to configure NAT
-configure_nat() {
-  sudo iptables -t nat -A POSTROUTING -o $wan_interface -j MASQUERADE
-  sudo netfilter-persistent save
-}
-
-# Function to configure firewall
-configure_firewall() {
-  # Default policy to drop all incoming packets.
+# Function to configure NAT and firewall
+configure_nat_and_firewall() {
+  # Flush existing rules and set default policies to drop all incoming packets.
+  sudo iptables -F
   sudo iptables -P INPUT DROP
   sudo iptables -P FORWARD DROP
 
@@ -95,6 +90,8 @@ configure_firewall() {
 
   # NAT traffic going out the WAN interface.
   sudo iptables -t nat -A POSTROUTING -o $wan_interface -j MASQUERADE
+
+  # Save the firewall rules
   sudo netfilter-persistent save
 }
 
@@ -113,6 +110,5 @@ configure_wan_interface
 enable_ip_forwarding
 configure_lan_interface
 configure_dhcp_server
-configure_nat
-configure_firewall
+configure_nat_and_firewall
 reboot_system
