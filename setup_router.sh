@@ -95,6 +95,7 @@ configure_firewall() {
 
   # NAT traffic going out the WAN interface.
   sudo iptables -t nat -A POSTROUTING -o $wan_interface -j MASQUERADE
+  sudo netfilter-persistent save
 }
 
 # Function to reboot
