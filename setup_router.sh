@@ -74,6 +74,29 @@ configure_nat() {
   sudo netfilter-persistent save
 }
 
+# Function to configure firewall
+configure_firewall() {
+  # Default policy to drop all incoming packets.
+  sudo iptables -P INPUT DROP
+  sudo iptables -P FORWARD DROP
+
+  # Accept incoming packets from localhost and the LAN interface.
+  sudo iptables -A INPUT -i lo -j ACCEPT
+  sudo iptables -A INPUT -i $lan_interface -j ACCEPT
+
+  # Accept incoming packets from the WAN if the router initiated the connection.
+  sudo iptables -A INPUT -i $wan_interface -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+  # Forward LAN packets to the WAN.
+  sudo iptables -A FORWARD -i $lan_interface -o $wan_interface -j ACCEPT
+
+  # Forward WAN packets to the LAN if the LAN initiated the connection.
+  sudo iptables -A FORWARD -i $wan_interface -o $lan_interface -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+  # NAT traffic going out the WAN interface.
+  sudo iptables -t nat -A POSTROUTING -o $wan_interface -j MASQUERADE
+}
+
 # Function to reboot
 reboot_system() {
   echo "Configuration complete. Rebooting the system..."
@@ -90,4 +113,5 @@ enable_ip_forwarding
 configure_lan_interface
 configure_dhcp_server
 configure_nat
+configure_firewall
 reboot_system
